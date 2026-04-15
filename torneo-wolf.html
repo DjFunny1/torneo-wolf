@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Torneo Wolf</title>
+<style>
+body {
+  font-family: Arial;
+  background-image: url('https://i.postimg.cc/tJVnfSWh/Wolf-Tournament.png');
+  background-size: cover;
+  color: #fff;
+  text-align: center;
+}
+h1 {
+  color: #ff3c3c;
+}
+.notas {
+  display: flex;
+  justify-self: center;
+  text-shadow: 1px 1px 10px red;
+  font-weight: bold;
+  color: white;
+  font-size: 18px;
+  gap: 50px;
+}
+.notas p {
+  align-content: center;
+  background: #5b71b87e;
+  width: 200px;
+  height: 30px;
+  border-radius: 5px;
+}
+
+table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 90%;
+}
+th, td {
+  border: 2px solid red;
+  padding: 8px;
+}
+input {
+  width: 60px;
+  text-align: center;
+}
+button {
+  margin: 10px;
+  padding: 10px 15px;
+  cursor: pointer;
+  background: #ff3c3c;
+  color: white;
+  border: none;
+}
+
+tr {
+  background: #8091b68f;
+  text-shadow: 1px 1px 5px blue;
+  color: white;
+}
+
+button.eliminar {
+  color: white;
+  padding: 4px 6px;
+  font-size: 12px;
+  background: #ff3c3c;
+  border-radius: 4px;
+}
+button.eliminar:hover {
+  background: #ff0000;
+  transform: scale(1.1);
+}
+</style>
+</head>
+<body>
+  <div>
+<h1>🐺 TORNEO WOLF</h1>
+    <div class= notas>
+    <p>1er Lugar: 10 puntos</p>
+    <p>2do Lugar: 7 puntos</p>
+    <p>3er Lugar: 5 puntos</p>
+    </div>
+  </div>
+  
+<button onclick="agregarJugador()">Agregar Jugador</button>
+<button onclick="calcular()">Calcular Ranking</button>
+<button onclick="reiniciarTodo()">Reiniciar Todo</button>
+<button onclick="resetearPuntos()">Resetear Puntos</button>
+
+<table id="tabla">
+<thead>
+<tr>
+  <th>Jugador</th>
+  <th>P1</th>
+  <th>P2</th>
+  <th>P3</th>
+  <th>Total</th>
+  <th>Acción</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<script>
+document.addEventListener("input", (e) => {
+  if (e.target.tagName === "INPUT") {
+    calcular(); // solo cuando cambian puntos
+  } else {
+    guardarDatos(); // cuando editas nombre
+  }
+});
+
+let contador = 1;
+
+function agregarJugador() {
+  const tabla = document.querySelector("#tabla tbody");
+  const fila = document.createElement("tr");
+
+fila.innerHTML = `
+  <td contenteditable="true">Jugador${contador}</td>
+  <td><input type="number" value="0"></td>
+  <td><input type="number" value="0"></td>
+  <td><input type="number" value="0"></td>
+  <td class="total">0</td>
+  <td><button class="eliminar" onclick="eliminarJugador(this)">X</button></td>
+`;
+
+  tabla.appendChild(fila);
+  contador++;
+  guardarDatos();
+}
+
+function eliminarJugador(btn) {
+  const fila = btn.parentElement.parentElement;
+  fila.remove();
+  guardarDatos(); // 🔥 importante para actualizar storage
+}
+
+function calcular() {
+  const filas = document.querySelectorAll("#tabla tbody tr");
+
+  filas.forEach(fila => {
+    const inputs = fila.querySelectorAll("input");
+    let total = 0;
+
+    inputs.forEach(inp => {
+      total += parseInt(inp.value) || 0;
+    });
+
+    fila.querySelector(".total").textContent = total;
+  });
+
+  ordenar();
+  guardarDatos();
+}
+
+function ordenar() {
+  const tbody = document.querySelector("#tabla tbody");
+  const filas = Array.from(tbody.querySelectorAll("tr"));
+
+  filas.sort((a, b) => {
+    const t1 = parseInt(a.querySelector(".total").textContent);
+    const t2 = parseInt(b.querySelector(".total").textContent);
+    return t2 - t1;
+  });
+
+  tbody.innerHTML = "";
+  filas.forEach(f => tbody.appendChild(f));
+}
+
+function guardarDatos() {
+  const filas = document.querySelectorAll("#tabla tbody tr");
+  let data = [];
+
+  filas.forEach(fila => {
+    const nombre = fila.children[0].textContent;
+    const p1 = fila.children[1].querySelector("input").value;
+    const p2 = fila.children[2].querySelector("input").value;
+    const p3 = fila.children[3].querySelector("input").value;
+
+    data.push({ nombre, p1, p2, p3 });
+  });
+
+  localStorage.setItem("torneoWOLF", JSON.stringify(data));
+}
+function cargarDatos() {
+  const data = JSON.parse(localStorage.getItem("torneoWOLF"));
+
+  if (!data) return;
+
+  const tabla = document.querySelector("#tabla tbody");
+  tabla.innerHTML = "";
+
+  data.forEach(j => {
+    const fila = document.createElement("tr");
+
+fila.innerHTML = `
+  <td contenteditable="true">${j.nombre}</td>
+  <td><input type="number" value="${j.p1}"></td>
+  <td><input type="number" value="${j.p2}"></td>
+  <td><input type="number" value="${j.p3}"></td>
+  <td class="total">0</td>
+  <td><button class="eliminar" onclick="eliminarJugador(this)">X</button></td>
+`;
+
+    tabla.appendChild(fila);
+  });
+
+  calcular();
+}
+
+window.onload = () => {
+  cargarDatos();
+};
+
+function reiniciarTodo() {
+  if (confirm("¿Seguro que quieres borrar TODO el torneo?")) {
+    localStorage.removeItem("torneoWOLF");
+    document.querySelector("#tabla tbody").innerHTML = "";
+    contador = 1;
+  }
+}
+function resetearPuntos() {
+  const filas = document.querySelectorAll("#tabla tbody tr");
+
+  filas.forEach(fila => {
+    fila.querySelectorAll("input").forEach(inp => inp.value = 0);
+    fila.querySelector(".total").textContent = 0;
+  });
+
+  guardarDatos();
+}
+</script>
+</body>
+</html>
